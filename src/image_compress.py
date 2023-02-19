@@ -10,8 +10,8 @@ class ImageCompressor(QWidget):
         self.title = 'Image Compressor'
         self.left = 10
         self.top = 10
-        self.width = 400
-        self.height = 400
+        self.width = 800
+        self.height = 800
         # self.formatComboBox = QComboBox(self)
         # self.formatComboBox.addItems(['JPEG', 'PNG', 'BMP', 'GIF'])
         self.image_path = None
@@ -28,7 +28,7 @@ class ImageCompressor(QWidget):
         self.open_file_button = QPushButton('Open Image')
         self.open_file_button.clicked.connect(self.open_file_dialog)
         self.image_label = QLabel()
-        self.image_label.setFixedSize(600, 600)
+        self.image_label.setFixedSize(800, 800)
         layout = QGridLayout()
         layout.addWidget(self.image_label, 0, 0, 1, 2)
         layout.addWidget(self.image_size_label, 1, 0)

@@ -1,8 +1,11 @@
 import os
 import sys
 import subprocess
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QPushButton, QLabel, QVBoxLayout, QMessageBox, QComboBox, QListWidget, QListWidgetItem
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QPushButton, QLabel, QVBoxLayout, QMessageBox, \
+    QComboBox, QListWidget, QListWidgetItem
 import pkg_resources
+import shutil
+
 
 class PDFCompressor(QWidget):
     def __init__(self):
@@ -70,13 +73,24 @@ class PDFCompressor(QWidget):
                 # 获取压缩后的文件名
                 output_file_name = os.path.splitext(file)[0] + '_compressed.pdf'
 
-                gs_path = pkg_resources.resource_filename(__name__, "")
+                gs = get_resource_path('bin/gswin64.exe')
                 # 构造 Ghostscript 压缩命令
-                cmd = ['gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4', '-dPDFSETTINGS={}'.format(self.compression_level), '-dNOPAUSE', '-dQUIET', '-dBATCH', '-sOutputFile={}'.format(output_file_name), file]
+                cmd = [gs, '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4',
+                       '-dPDFSETTINGS={}'.format(self.compression_level), '-dNOPAUSE', '-dQUIET', '-dBATCH',
+                       '-sOutputFile={}'.format(output_file_name), file]
 
                 # 调用 Ghostscript 进行 PDF 压缩
                 try:
-                    subprocess.run(cmd, check=True)
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                    # subprocess.Popen(cmd, shell=False, startupinfo=startupinfo, creationflags=subprocess.CREATE_NO_WINDOW,
+                    #                  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    subprocess.call(cmd, shell=False, startupinfo=startupinfo,
+                                    creationflags=subprocess.CREATE_NO_WINDOW,
+                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    # subprocess.call(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    # subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    # subprocess.run(cmd, check=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except subprocess.CalledProcessError:
                     QMessageBox.critical(self, "错误", "压缩文件时发生错误！")
                     return
@@ -84,6 +98,21 @@ class PDFCompressor(QWidget):
             QMessageBox.information(self, "提示", "文件压缩完成！")
         else:
             QMessageBox.warning(self, "警告", "请选择要压缩的 PDF 文件！")
+
+
+def get_resource_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
+def get_ghostscript_path():
+    gs_names = [
+        'gs', 'gswin32', 'gswin64'
+    ]
+    for name in gs_names:
+        if shutil.which(name):
+            return shutil.which(name)
+        raise FileNotFoundError(f'No GhostScript executable was found on path ({"/".join(gs_names)})')
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
